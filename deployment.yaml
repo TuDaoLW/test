@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-producer-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-producer
+  template:
+    metadata:
+      labels:
+        app: kafka-producer
+    spec:
+      containers:
+      - name: kafka-producer
+        image: your-registry/kafka-producer-demo:latest
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        env:
+        - name: SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS
+          value: "kafka-cluster-kafka-bootstrap:9092"
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SECURITY_PROTOCOL
+          value: "SASL_SSL"
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SASL_MECHANISM
+          value: "SCRAM-SHA-512"
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SASL_JAAS_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: kafka-admin
+              key: sasl.jaas.config
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SSL_TRUSTSTORE_TYPE
+          value: "JKS"
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SSL_TRUSTSTORE_LOCATION
+          value: "/etc/kafka-certs/truststore.jks"
+        - name: SPRING_KAFKA_PRODUCER_PROPERTIES_SSL_TRUSTSTORE_PASSWORD
+          value: "elcom@123"
+        - name: SPRING_KAFKA_PRODUCER_TOPIC
+          value: "test-topic"  # Set your desired topic here
+        volumeMounts:
+        - name: truststore
+          mountPath: "/etc/kafka-certs"
+          readOnly: true
+      volumes:
+      - name: truststore
+        secret:
+          secretName: kafka-ui-truststore
+          items:
+          - key: truststore.jks
+            path: truststore.jks
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-producer-service
+  namespace: default
+spec:
+  selector:
+    app: kafka-producer
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  type: ClusterIP
