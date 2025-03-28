@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka-producer-app
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -15,9 +14,9 @@ spec:
     spec:
       containers:
       - name: kafka-producer
-        image: your-registry/kafka-producer-demo:latest
+        image: tudaolw/sample:kaf-pro
         ports:
-        - containerPort: 8080
+        - containerPort: 8081
           protocol: TCP
         env:
         - name: SPRING_KAFKA_PRODUCER_BOOTSTRAP_SERVERS
@@ -55,12 +54,11 @@ apiVersion: v1
 kind: Service
 metadata:
   name: kafka-producer-service
-  namespace: default
 spec:
   selector:
     app: kafka-producer
   ports:
     - protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: 8081
+      targetPort: 8081
   type: ClusterIP
